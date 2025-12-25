@@ -11,9 +11,6 @@
 	"icon": "assets/sparkler/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"net.myrari.sparkler.Sparkler"
-		],
 		"client": [
 			"net.myrari.sparkler.SparklerClient"
 		]

@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "net.myrari.sparkler.mixin",
+	"package": "net.myrari.sparkler.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
