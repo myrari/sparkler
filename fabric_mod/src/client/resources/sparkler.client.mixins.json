@@ -3,7 +3,7 @@
 	"package": "net.myrari.sparkler.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"PlayerHitMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
