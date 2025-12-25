@@ -80,7 +80,7 @@ public class SparklerClient implements ClientModInitializer {
 
 		PlayerHurtCallback.EVENT.register((player) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
-				LOGGER.info("player hurt!");
+				LOGGER.trace("player hurt!");
 				sendHit(httpClient);
 			}
 		});
