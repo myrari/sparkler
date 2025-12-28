@@ -13,8 +13,9 @@ public class PlayerHitMixin {
 	@Inject(at = @At("HEAD"), method = "hurtTo")
 	private void hurtTo(float f, CallbackInfo ci) {
 		LocalPlayer pl = (LocalPlayer) (Object) this;
-		if (f < pl.getHealth()) {
-			PlayerHurtCallback.EVENT.invoker().hurt(pl);
+		float dmg = pl.getHealth() - f;
+		if (dmg > 0.0f) {
+			PlayerHurtCallback.EVENT.invoker().hurt(pl, dmg);
 		}
 	}
 }

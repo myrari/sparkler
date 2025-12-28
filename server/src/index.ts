@@ -9,6 +9,8 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
 const app = express();
 
+app.use(express.json());
+
 app.get("/", (_req, res) => {
     res.sendFile("main.html", {
         root: root,
@@ -20,12 +22,12 @@ app.post("/hit", (req, res) => {
     if (secret == undefined) {
         console.warn("Received hit, but with no secret!");
         res.sendStatus(401);
-    } else if (secret == CLIENT_SECRET) {
-        console.info("Received valid hit!");
-        res.sendStatus(200);
-    } else {
+    } else if (secret != CLIENT_SECRET) {
         console.warn("Received hit, but with incorrect secret!");
         res.sendStatus(403);
+    } else {
+        console.info("Received valid hit for " + req.body.dmg);
+        res.sendStatus(200);
     }
 });
 

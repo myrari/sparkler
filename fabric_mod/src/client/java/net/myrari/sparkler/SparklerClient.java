@@ -11,18 +11,34 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.Minecraft;
 
 class SparklerConfig {
-	public int PORT;
-	public String CLIENT_SECRET;
+	private final int port;
+	private final String client_secret;
+
+	public static final Codec<SparklerConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+			Codec.INT.fieldOf("port").forGetter(SparklerConfig::getPort),
+			Codec.STRING.fieldOf("client_secret").forGetter(SparklerConfig::getClientSecret))
+			.apply(instance, SparklerConfig::new));
 
 	public SparklerConfig(int port, String secret) {
-		this.PORT = port;
-		this.CLIENT_SECRET = secret;
+		this.port = port;
+		this.client_secret = secret;
+	}
+
+	public int getPort() {
+		return this.port;
+	}
+
+	public String getClientSecret() {
+		return this.client_secret;
 	}
 }
 
@@ -31,24 +47,25 @@ public class SparklerClient implements ClientModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private static void sendHit(HttpClient httpClient) {
+	private static void sendHit(HttpClient httpClient, float dmg) {
 		// eventually load config from file
 		SparklerConfig cfg = new SparklerConfig(9648, "secret");
 
-		URI uri = URI.create("http://localhost:" + cfg.PORT + "/hit?secret=" + cfg.CLIENT_SECRET);
+		URI uri = URI.create("http://localhost:" + cfg.getPort() + "/hit?secret=" + cfg.getClientSecret());
 
 		HttpRequest req = HttpRequest.newBuilder()
 				.uri(uri)
-				.POST(BodyPublishers.noBody())
+				.header("Content-Type", "application/json")
+				.POST(BodyPublishers.ofString("{\"dmg\":" + dmg + "}"))
 				.build();
 
-		CompletableFuture<HttpResponse<Void>> futureRes = httpClient.sendAsync(req,
-				HttpResponse.BodyHandlers.discarding());
+		CompletableFuture<HttpResponse<String>> futureRes = httpClient.sendAsync(req,
+				HttpResponse.BodyHandlers.ofString());
 
 		futureRes.thenAccept((res) -> {
 			int status = res.statusCode();
 			if (status == 200) {
-				LOGGER.info("Successfully sent hit!");
+				LOGGER.info("Successfully sent hit for " + dmg);
 			} else {
 				LOGGER.warn("Tried to send hit, but got error code: " + status);
 			}
@@ -67,15 +84,15 @@ public class SparklerClient implements ClientModInitializer {
 			dispatcher.register(
 					ClientCommandManager.literal("sparkle").executes(ctx -> {
 						LOGGER.info("Called /sparkle");
-						sendHit(httpClient);
+						sendHit(httpClient, 1.0f);
 						return 1;
 					}));
 		});
 
-		PlayerHurtCallback.EVENT.register((player) -> {
+		PlayerHurtCallback.EVENT.register((player, dmg) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
-				LOGGER.trace("player hurt!");
-				sendHit(httpClient);
+				LOGGER.debug("player hurt for " + dmg);
+				sendHit(httpClient, dmg);
 			}
 		});
 	}

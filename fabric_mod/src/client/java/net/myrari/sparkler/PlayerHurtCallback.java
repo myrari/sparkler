@@ -9,11 +9,11 @@ import net.minecraft.client.player.LocalPlayer;
  */
 public interface PlayerHurtCallback {
     Event<PlayerHurtCallback> EVENT = EventFactory.createArrayBacked(PlayerHurtCallback.class,
-            (listeners) -> (player) -> {
+            (listeners) -> (player, dmg) -> {
                 for (PlayerHurtCallback listener : listeners) {
-                    listener.hurt(player);
+                    listener.hurt(player, dmg);
                 }
             });
 
-    void hurt(LocalPlayer player);
+    void hurt(LocalPlayer player, float dmg);
 }

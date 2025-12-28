@@ -14,7 +14,11 @@
 		document.getElementById("send_hit_button").onclick = _ => {
 			const secret = document.getElementById("secret_input").value;
 			fetch(`/hit?secret=${secret}`, {
-				method: "POST"
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({ dmg: 1.0  })
 			});
 		};
 	</script>
