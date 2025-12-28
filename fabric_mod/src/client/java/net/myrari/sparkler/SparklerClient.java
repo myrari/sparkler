@@ -29,9 +29,6 @@ class SparklerConfig {
 public class SparklerClient implements ClientModInitializer {
 	public static final String MOD_ID = "sparkler";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	private static void sendHit(HttpClient httpClient) {
@@ -60,9 +57,6 @@ public class SparklerClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		// This entrypoint is suitable for setting up client-specific logic, such as
-		// rendering.
-
 		UUID uuid = Minecraft.getInstance().getGameProfile().id();
 
 		LOGGER.info("Found player uuid: " + uuid);

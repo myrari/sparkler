@@ -7,7 +7,7 @@
 	"authors": [
 		"@myrari"
 	],
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/sparkler/icon.png",
 	"environment": "client",
 	"entrypoints": {
