@@ -4,23 +4,20 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Sparkler</title>
+
+	<script src="https://api.lovense-api.com/basic-sdk/core.min.js"></script>
+	<script src="main.js"></script>
 </head>
 <body>
 	<h1>Hello from sparkler!</h1>
 
+	<div class="main_center" display="flex" justify-content="center">
+		<button type="submit" id="auth_button">Auth</button>
+		<div id="auth_resp"></div>
+	</div>
+
 	<input type="text" id="secret_input" value="Client Secret:">
 	<button type="submit" id="send_hit_button">Send Hit</button>
-	<script>
-		document.getElementById("send_hit_button").onclick = _ => {
-			const secret = document.getElementById("secret_input").value;
-			fetch(`/hit?secret=${secret}`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({ dmg: 1.0  })
-			});
-		};
-	</script>
 </body>
+
 </html>
