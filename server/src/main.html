@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Sparkler</title>
 
-	<script src="https://api.lovense-api.com/basic-sdk/core.min.js"></script>
 	<script src="main.js"></script>
 </head>
+
 <body>
-	<h1>Hello from sparkler!</h1>
 
-	<div class="main_center" display="flex" justify-content="center">
-		<button type="submit" id="auth_button">Auth</button>
-		<div id="auth_resp"></div>
+	<div class="main_center" display="flex" align="center" justify-content="center">
+		<h1>✨sparkler✨</h1>
+
+		<form action="/auth" method="post">
+			<label for="auth_username">Username:</label>
+			<input type="text" name="auth_username" id="auth_username"><br>
+			<label for="auth_secret">Secret:</label>
+			<input type="password" name="auth_secret" id="auth_secret"><br>
+			<input type="submit" value="Submit">
+		</form>
+		<div id="error_response_div"></div>
+		<div id="qrcode_div"></div>
 	</div>
-
-	<input type="text" id="secret_input" value="Client Secret:">
-	<button type="submit" id="send_hit_button">Send Hit</button>
 </body>
 
 </html>

@@ -47,16 +47,18 @@ public class SparklerClient implements ClientModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private static void sendHit(HttpClient httpClient, float dmg) {
+	private static void sendHit(HttpClient httpClient, UUID uuid, float dmg) {
 		// eventually load config from file
 		SparklerConfig cfg = new SparklerConfig(9648, "secret");
 
 		URI uri = URI.create("http://localhost:" + cfg.getPort() + "/hit?secret=" + cfg.getClientSecret());
 
+		String bodyString = "{\"dmg\": " + dmg + ", \"id\": " + uuid + "}";
+
 		HttpRequest req = HttpRequest.newBuilder()
 				.uri(uri)
 				.header("Content-Type", "application/json")
-				.POST(BodyPublishers.ofString("{\"dmg\":" + dmg + "}"))
+				.POST(BodyPublishers.ofString(bodyString))
 				.build();
 
 		CompletableFuture<HttpResponse<String>> futureRes = httpClient.sendAsync(req,
@@ -84,7 +86,7 @@ public class SparklerClient implements ClientModInitializer {
 			dispatcher.register(
 					ClientCommandManager.literal("sparkle").executes(ctx -> {
 						LOGGER.info("Called /sparkle");
-						sendHit(httpClient, 1.0f);
+						sendHit(httpClient, uuid, 1.0f);
 						return 1;
 					}));
 		});
@@ -92,7 +94,7 @@ public class SparklerClient implements ClientModInitializer {
 		PlayerHurtCallback.EVENT.register((player, dmg) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
 				LOGGER.debug("player hurt for " + dmg);
-				sendHit(httpClient, dmg);
+				sendHit(httpClient, uuid, dmg);
 			}
 		});
 	}
