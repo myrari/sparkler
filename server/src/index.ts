@@ -150,6 +150,9 @@ app.post("/auth", async (req, res) => {
 
     const qrResp = await getQRCode();
     let qrData = qrResp ? JSON.parse(qrResp as string) : {};
+
+    socket.disconnect();
+
     if (qrData.data && qrData.data.ackId == ackId) {
         console.info(`got qrcode for ${username}`);
         res.redirect("/?" + stringify({
@@ -194,6 +197,8 @@ app.post("/hit", (req, res) => {
     const dmg: number = req.body.dmg;
     const to: number = req.body.to;
     console.info(`${uuid} hit for ${dmg} to ${to}`);
+
+    sendHit(uuid, dmg, 2, 20 - to, easeInOutCubic);
 
     res.sendStatus(200);
 });
@@ -242,6 +247,48 @@ async function initSocket(uuid: string): Promise<SocketInfo> {
         socketUrl: socketResp.data.socketIoUrl,
         socketPath: socketResp.data.socketIoPath,
     };
+}
+
+function easeInOutCubic(x: number): number {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+function sendHit(id: string, strength: number, res: number, length: number, f: (x: number) => number) {
+    if (!players[id]) {
+        console.error(`Cannot send hit for unauthenticated player ${id}`);
+        return;
+    }
+
+    if (strength < 1 || length < 1 || res <= 0) {
+        return;
+    }
+
+    const len = Math.floor(length * res);
+
+    let cmds: string[] = new Array(len);
+    for (let i = 0; i < len; i++) {
+        const raw = strength * f(1 - (i / len));
+        const clamped = Math.min(20, Math.ceil(raw));
+        const str = clamped.toString().split(".")[0];
+        cmds[i] = "Vibrate:" + str;
+    }
+    const cmd = cmds.join(",");
+
+    const socket = io(players[id].socket.socketUrl, {
+        path: players[id].socket.socketPath,
+        transports: ["websocket"],
+    });
+
+    socket.emit("basicapi_send_toy_command_ts", {
+        command: "Function",
+        action: cmd,
+        timeSec: length,
+        loopRunningSec: 1 / res,
+        stopPrevious: 1,
+        apiVer: 1,
+    });
+
+    socket.disconnect();
 }
 
 /** IMMEDIATE LOGIC */
