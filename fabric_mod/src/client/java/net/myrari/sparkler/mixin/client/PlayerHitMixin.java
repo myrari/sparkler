@@ -15,7 +15,7 @@ public class PlayerHitMixin {
 		LocalPlayer pl = (LocalPlayer) (Object) this;
 		float dmg = pl.getHealth() - f;
 		if (dmg > 0.0f) {
-			PlayerHurtCallback.EVENT.invoker().hurt(pl, dmg);
+			PlayerHurtCallback.EVENT.invoker().hurt(pl, dmg, f);
 		}
 	}
 }

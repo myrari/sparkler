@@ -51,6 +51,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded());
 
+/** MAIN ROUTES */
+
 app.get("/", (_req, res) => {
     res.sendFile("main.html", {
         root: root,
@@ -73,49 +75,7 @@ app.get("/favicon.ico", (_req, res) => {
     });
 });
 
-async function initSocket(uuid: string): Promise<SocketInfo> {
-    console.info("init socket for " + uuid);
-
-    const authResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getToken", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            token: DEV_TOKEN,
-            uid: uuid,
-        }),
-    })).json();
-
-    if (authResp.code != 0) {
-        return socketError(`auth failed! ${authResp.code}: ${authResp.message}`);
-    }
-
-    console.info("got auth token: " + authResp.data.authToken);
-
-    const socketResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getSocketUrl", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            platform: PLATFORM,
-            authToken: authResp.data.authToken,
-        }),
-    })).json();
-
-    if (socketResp.code != 0) {
-        return socketError(`getting socket failed! ${socketResp.code}: ${socketResp.message}`);
-    }
-
-    return {
-        initialized: true,
-        error: undefined,
-        socketUrl: socketResp.data.socketIoUrl,
-        socketPath: socketResp.data.socketIoPath,
-    };
-}
-
+// full authentication pipeline, verifies user & gets qr code
 app.post("/auth", async (req, res) => {
     const username = req.body.auth_username;
     const secret = req.body.auth_secret;
@@ -129,7 +89,7 @@ app.post("/auth", async (req, res) => {
         }));
         return;
     }
-    if (!username) {
+    if (!username && !req.body.auth_uuid) {
         console.warn("No username provided! Ignoring...");
         res.redirect("/?" + stringify({
             e: "Please enter your Minecraft username!",
@@ -145,7 +105,7 @@ app.post("/auth", async (req, res) => {
     });
     const userData = await mojangResp.json();
 
-    if (mojangResp.status != 200) {
+    if (mojangResp.status != 200 && !req.body.auth_uuid) {
         const err = userData.errorMessage;
         console.error("Failed to get Minecraft user data: " + err);
         res.redirect("/?" + stringify({
@@ -154,7 +114,7 @@ app.post("/auth", async (req, res) => {
         return;
     }
 
-    const uuid = userData.id;
+    const uuid = req.body.auth_uuid ? req.body.auth_uuid : userData.id;
 
     console.info("found minecraft uuid: " + uuid);
 
@@ -204,9 +164,11 @@ app.post("/auth", async (req, res) => {
     }
 });
 
+/** SPARKLER API ROUTES */
+
 app.post("/hit", (req, res) => {
-    const uuid = req.query.id?.toString();
     const secret = req.query.secret?.toString();
+    const uuid: string = req.body.id.trim().replace(/-/g, "");
 
     if (!secret) {
         console.warn("Received hit, but with no secret!");
@@ -229,10 +191,62 @@ app.post("/hit", (req, res) => {
         return;
     }
 
-    console.info(`${uuid} hit for ${req.body.dmg}`);
+    const dmg: number = req.body.dmg;
+    const to: number = req.body.to;
+    console.info(`${uuid} hit for ${dmg} to ${to}`);
+
     res.sendStatus(200);
 });
 
+/** HELPER FUNCTIONS */
+
+// initialize a new socket with lovense
+async function initSocket(uuid: string): Promise<SocketInfo> {
+    console.info("init socket for " + uuid);
+
+    const authResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getToken", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            token: DEV_TOKEN,
+            uid: uuid,
+        }),
+    })).json();
+
+    if (authResp.code != 0) {
+        return socketError(`auth failed! ${authResp.code}: ${authResp.message}`);
+    }
+
+    console.info("got auth token: " + authResp.data.authToken);
+
+    const socketResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getSocketUrl", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            platform: PLATFORM,
+            authToken: authResp.data.authToken,
+        }),
+    })).json();
+
+    if (socketResp.code != 0) {
+        return socketError(`getting socket failed! ${socketResp.code}: ${socketResp.message}`);
+    }
+
+    return {
+        initialized: true,
+        error: undefined,
+        socketUrl: socketResp.data.socketIoUrl,
+        socketPath: socketResp.data.socketIoPath,
+    };
+}
+
+/** IMMEDIATE LOGIC */
+
+// start the server
 app.listen(PORT, () => {
     console.info(`The server is running at http://localhost:${PORT}`);
 });
