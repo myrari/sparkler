@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.xaviercanadas.randomwordslugs.generator.SlugGenerator;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -18,6 +19,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 class SparklerConfig {
 	private final int port;
@@ -47,11 +49,8 @@ public class SparklerClient implements ClientModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private static void sendHit(HttpClient httpClient, UUID uuid, float dmg, float to) {
-		// eventually load config from file
-		SparklerConfig cfg = new SparklerConfig(9648, "secret");
-
-		URI uri = URI.create("http://localhost:" + cfg.getPort() + "/hit?secret=" + cfg.getClientSecret());
+	private static void sendHit(HttpClient httpClient, String host, String secret, UUID uuid, float dmg, float to) {
+		URI uri = URI.create(host + "/hit?secret=" + secret);
 
 		String bodyString = "{\"dmg\": \"" + dmg + "\", \"to\": \"" + to + "\", \"id\": \"" + uuid + "\"}";
 
@@ -78,9 +77,15 @@ public class SparklerClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		final String HOST = "http://localhost:9648";
+
 		UUID uuid = Minecraft.getInstance().getGameProfile().id();
 
 		LOGGER.info("Found player uuid: " + uuid);
+
+		SlugGenerator slugGen = new SlugGenerator();
+		String secret = slugGen.generate(4);
+		LOGGER.info("session secret: " + secret);
 
 		HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -88,7 +93,9 @@ public class SparklerClient implements ClientModInitializer {
 			dispatcher.register(
 					ClientCommandManager.literal("sparkle").executes(ctx -> {
 						LOGGER.info("Called /sparkle");
-						sendHit(httpClient, uuid, 1.0f, 0.0f);
+						ctx.getSource().sendFeedback(Component.literal("Here's your client secret:"));
+						ctx.getSource().sendFeedback(Component.literal("§a" + secret + "§r"));
+						ctx.getSource().sendFeedback(Component.literal("Authenticate with it at: " + HOST));
 						return 1;
 					}));
 		});
@@ -96,7 +103,7 @@ public class SparklerClient implements ClientModInitializer {
 		PlayerHurtCallback.EVENT.register((player, dmg, to) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
 				LOGGER.debug("player hurt for " + dmg);
-				sendHit(httpClient, uuid, dmg, to);
+				sendHit(httpClient, HOST, secret, uuid, dmg, to);
 			}
 		});
 	}
