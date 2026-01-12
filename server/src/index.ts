@@ -89,7 +89,7 @@ app.post("/auth", async (req, res) => {
         }));
         return;
     }
-    if (!username && !req.body.auth_uuid) {
+    if (!username) {
         console.warn("No username provided! Ignoring...");
         res.redirect("/?" + stringify({
             e: "Please enter your Minecraft username!",
@@ -105,7 +105,7 @@ app.post("/auth", async (req, res) => {
     });
     const userData = await mojangResp.json();
 
-    if (mojangResp.status != 200 && !req.body.auth_uuid) {
+    if (mojangResp.status != 200) {
         const err = userData.errorMessage;
         console.error("Failed to get Minecraft user data: " + err);
         res.redirect("/?" + stringify({
@@ -114,7 +114,7 @@ app.post("/auth", async (req, res) => {
         return;
     }
 
-    const uuid = req.body.auth_uuid ? req.body.auth_uuid : userData.id;
+    const uuid = userData.id;
 
     console.info("found minecraft uuid: " + uuid);
 
