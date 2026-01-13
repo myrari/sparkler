@@ -6,7 +6,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +61,7 @@ public class SparklerClient implements ClientModInitializer {
 				.POST(BodyPublishers.ofString(bodyString))
 				.build();
 
-		CompletableFuture<HttpResponse<String>> futureRes = httpClient.sendAsync(req,
-				HttpResponse.BodyHandlers.ofString());
+		var futureRes = httpClient.sendAsync(req, HttpResponse.BodyHandlers.ofString());
 
 		futureRes.thenAccept((res) -> {
 			int status = res.statusCode();
@@ -83,7 +81,7 @@ public class SparklerClient implements ClientModInitializer {
 
 		LOGGER.info("Found player uuid: " + uuid);
 
-		SlugGenerator slugGen = new SlugGenerator();
+		var slugGen = new SlugGenerator();
 		String secret = slugGen.generate(4);
 		LOGGER.info("session secret: " + secret);
 
@@ -102,7 +100,7 @@ public class SparklerClient implements ClientModInitializer {
 
 		PlayerHurtCallback.EVENT.register((player, dmg, to) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
-				LOGGER.debug("player hurt for " + dmg);
+				LOGGER.info("player hurt for " + dmg);
 				sendHit(httpClient, HOST, secret, uuid, dmg, to);
 			}
 		});
