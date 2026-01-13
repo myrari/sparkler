@@ -79,7 +79,7 @@ public class SparklerClient implements ClientModInitializer {
 
 		UUID uuid = Minecraft.getInstance().getGameProfile().id();
 
-		LOGGER.info("Found player uuid: " + uuid);
+		LOGGER.debug("Found player uuid: " + uuid);
 
 		var slugGen = new SlugGenerator();
 		String secret = slugGen.generate(4);
@@ -90,7 +90,7 @@ public class SparklerClient implements ClientModInitializer {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			dispatcher.register(
 					ClientCommandManager.literal("sparkle").executes(ctx -> {
-						LOGGER.info("Called /sparkle");
+						LOGGER.debug("Called /sparkle");
 						ctx.getSource().sendFeedback(Component.literal("Here's your client secret:"));
 						ctx.getSource().sendFeedback(Component.literal("§a" + secret + "§r"));
 						ctx.getSource().sendFeedback(Component.literal("Authenticate with it at: " + HOST));
@@ -100,7 +100,7 @@ public class SparklerClient implements ClientModInitializer {
 
 		PlayerHurtCallback.EVENT.register((player, dmg, to) -> {
 			if (uuid.compareTo(player.getUUID()) == 0) {
-				LOGGER.info("player hurt for " + dmg);
+				LOGGER.debug("player hurt for " + dmg);
 				sendHit(httpClient, HOST, secret, uuid, dmg, to);
 			}
 		});

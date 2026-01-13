@@ -2,10 +2,10 @@ package net.myrari.sparkler;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.player.Player;
 
 /**
- * Callback for when a LocalPlayer is hurt.
+ * Callback for when a Player is hurt.
  */
 public interface PlayerHurtCallback {
     Event<PlayerHurtCallback> EVENT = EventFactory.createArrayBacked(PlayerHurtCallback.class,
@@ -15,5 +15,5 @@ public interface PlayerHurtCallback {
                 }
             });
 
-    void hurt(LocalPlayer player, float dmg, float to);
+    void hurt(Player player, float dmg, float to);
 }

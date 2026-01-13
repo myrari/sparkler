@@ -80,7 +80,7 @@ app.post("/auth", async (req, res) => {
     const username = req.body.auth_username;
     const secret = req.body.auth_secret;
 
-    console.info(`auth call: ${username}`);
+    console.debug(`auth call: ${username}`);
 
     if (!secret) {
         console.warn("No secret provided! Ignoring...");
@@ -116,7 +116,7 @@ app.post("/auth", async (req, res) => {
 
     const uuid = userData.id;
 
-    console.info("found minecraft uuid: " + uuid);
+    console.debug("found minecraft uuid: " + uuid);
 
     players[uuid] = newPlayer(secret);
     const socketInfo = await initSocket(uuid);
@@ -154,7 +154,7 @@ app.post("/auth", async (req, res) => {
     socket.disconnect();
 
     if (qrData.data && qrData.data.ackId == ackId) {
-        console.info(`got qrcode for ${username}`);
+        console.debug(`got qrcode for ${username}`);
         res.redirect("/?" + stringify({
             qr: qrData.data.qrcodeUrl,
         }));
@@ -196,9 +196,9 @@ app.post("/hit", (req, res) => {
 
     const dmg: number = req.body.dmg;
     const to: number = req.body.to;
-    console.info(`${uuid} hit for ${dmg} to ${to}`);
+    console.debug(`${uuid} hit for ${dmg} to ${to}`);
 
-    sendHit(uuid, dmg, 2, 20 - to, easeInOutCubic);
+    sendHit(uuid, dmg, 2, (20 - to) / 4, easeInOutCubic);
 
     res.sendStatus(200);
 });
@@ -207,7 +207,7 @@ app.post("/hit", (req, res) => {
 
 // initialize a new socket with lovense
 async function initSocket(uuid: string): Promise<SocketInfo> {
-    console.info("init socket for " + uuid);
+    console.debug("init socket for " + uuid);
 
     const authResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getToken", {
         method: "POST",
@@ -224,7 +224,7 @@ async function initSocket(uuid: string): Promise<SocketInfo> {
         return socketError(`auth failed! ${authResp.code}: ${authResp.message}`);
     }
 
-    console.info("got auth token: " + authResp.data.authToken);
+    console.debug("got auth token: " + authResp.data.authToken);
 
     const socketResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getSocketUrl", {
         method: "POST",
@@ -284,11 +284,10 @@ function sendHit(id: string, strength: number, res: number, length: number, f: (
         action: cmd,
         timeSec: length,
         loopRunningSec: 1 / res,
+        loopPauseSec: 0.0,
         stopPrevious: 1,
         apiVer: 1,
     });
-
-    socket.disconnect();
 }
 
 /** IMMEDIATE LOGIC */
