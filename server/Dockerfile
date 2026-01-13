@@ -4,7 +4,10 @@ RUN npm install -g typescript
 
 USER node
 
+COPY --chown=node . /home/node/app/
 WORKDIR /home/node/app
+
+RUN npm install
 
 RUN npm run build
 
