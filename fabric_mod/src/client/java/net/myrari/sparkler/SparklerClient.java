@@ -75,7 +75,7 @@ public class SparklerClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		final String HOST = "http://localhost:9648";
+		final String HOST = "https://sparkler.myrari.net";
 
 		UUID uuid = Minecraft.getInstance().getGameProfile().id();
 
