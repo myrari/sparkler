@@ -1,0 +1,12 @@
+services:
+  sparkler:
+    build: .
+    container_name: "sparkler"
+    user: "node"
+    working_dir: /home/node/app
+    volumes:
+      - ./:/home/node/app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - ${PORT}:${PORT}

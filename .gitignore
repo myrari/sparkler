@@ -43,3 +43,4 @@ replay_*.log
 node_modules/
 .env
 .cache
+server/dist/

@@ -103,7 +103,7 @@ app.post("/auth", async (req, res) => {
             "Content-Type": "application/json",
         },
     });
-    const userData = await mojangResp.json();
+    const userData: any = await mojangResp.json();
 
     if (mojangResp.status != 200) {
         const err = userData.errorMessage;
@@ -209,7 +209,7 @@ app.post("/hit", (req, res) => {
 async function initSocket(uuid: string): Promise<SocketInfo> {
     console.debug("init socket for " + uuid);
 
-    const authResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getToken", {
+    const authResp: any = await (await fetch("https://api.lovense-api.com/api/basicApi/getToken", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -226,7 +226,7 @@ async function initSocket(uuid: string): Promise<SocketInfo> {
 
     console.debug("got auth token: " + authResp.data.authToken);
 
-    const socketResp = await (await fetch("https://api.lovense-api.com/api/basicApi/getSocketUrl", {
+    const socketResp: any = await (await fetch("https://api.lovense-api.com/api/basicApi/getSocketUrl", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
