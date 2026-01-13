@@ -11,6 +11,9 @@ addEventListener("DOMContentLoaded", _ => {
     }
 
     if (qrcodeUrl) {
+        // hide login boxes
+        document.getElementById("auth_form").innerText = "";
+
         const img = document.createElement("img");
         img.src = qrcodeUrl;
         img.alt = "QR Code";

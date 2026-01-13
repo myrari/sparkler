@@ -9,7 +9,7 @@ const root = dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT;
 
 const DEV_TOKEN = process.env.DEV_TOKEN;
-const PLATFORM = "myrari.net";
+const PLATFORM = process.env.PLATFORM;
 
 interface SocketInfo {
     initialized: boolean;
