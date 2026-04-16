@@ -6,7 +6,7 @@ function pairingCodeHTML(pairingCode) {
 }
 
 
-async function newSession(button) {
+async function newSession() {
     console.info("Creating new session");
 
     const resp = await fetch("/new-session", {
@@ -18,16 +18,16 @@ async function newSession(button) {
         // got successful pairing code!
         const pairingCode = json.pairingCode;
 
-		console.info(`Got pairing code: ${pairingCode}`);
+        console.info(`Got pairing code: ${pairingCode}`);
 
         document.getElementById("interact_div").innerHTML += pairingCodeHTML(pairingCode);
 
-        button.disabled = true;
+        document.getElementById("new_session_button").disabled = true;
     } else {
         // get pairing code failed
         const error = json.error;
 
-		console.error(`Failed to get pairing code: ${error}`)
+        console.error(`Failed to get pairing code: ${error}`)
 
         document.getElementById("error_response_div").innerText = error;
     }
