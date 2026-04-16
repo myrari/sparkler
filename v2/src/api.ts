@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { Express } from "express";
 
 interface SessionData {
+    secret: string;
     pairingCode: string;
 
     timeCreated: Date;
@@ -13,7 +14,8 @@ interface SessionData {
     allowMultiPair: boolean;
 }
 
-let sessions: Record<string, SessionData> = {};
+// let sessions: Record<string, SessionData> = {};
+let sessions: Array<SessionData> = [];
 
 export function addAPIRoutes(app: Express) {
     // main api
@@ -28,30 +30,32 @@ export function addAPIRoutes(app: Express) {
             return;
         }
 
-        if (!(secret in sessions)) {
-            // invalid secret
-            console.warn(`${req.ip} send command with invalid secret`);
-            res.status(401).send({
-                error: "Invalid session secret! Did you pair first?"
-            });
-            return;
+        for (const session of sessions) {
+            if (session.secret == secret) {
+                // we have a valid session!
+                if (session.strictIP && session.IP != req.ip) {
+                    // correct secret, but incorrect connection IP
+                    console.warn(`${req.ip} sent a command with correct secret, but incorrect IP address! Secret may be compromised`);
+                    res.status(403).send({
+                        error: "Failed IP address check"
+                    });
+                    return;
+                }
+
+                console.info(`sparkle for session from ${session.IP}!`);
+
+                res.sendStatus(200);
+                return;
+            }
         }
 
-        // we have a valid session!
-        const session = sessions[secret];
+        // could not find valid session
+        console.warn(`${req.ip} send command with invalid secret`);
+        res.status(401).send({
+            error: "Invalid session secret! Did you pair first?"
+        });
+        return;
 
-        if (session.strictIP && session.IP != req.ip) {
-            // correct secret, but incorrect connection IP
-            console.warn(`${req.ip} sent a command with correct secret, but incorrect IP address! Secret may be compromised`);
-            res.status(403).send({
-                error: "Failed IP address check"
-            });
-			return;
-        }
-
-        console.info(`sparkle for session from ${session.IP}!`);
-
-        res.sendStatus(200);
     });
 
     // auth flow:
@@ -72,8 +76,8 @@ export function addAPIRoutes(app: Express) {
             return;
         }
 
-        const newSecret = randomUUID().toString();
         const newSession: SessionData = {
+            secret: randomUUID().toString(),
             pairingCode: randomUUID().toString(),
             timeCreated: new Date(),
             IP: req.ip,
@@ -83,7 +87,7 @@ export function addAPIRoutes(app: Express) {
             // for now, no multi-pairing
             allowMultiPair: false,
         }
-        sessions[newSecret] = newSession;
+        sessions.push(newSession);
 
         res.send({
             pairingCode: newSession.pairingCode
@@ -95,7 +99,7 @@ export function addAPIRoutes(app: Express) {
 
         const pairingCode = req.get("pairing-code");
 
-        for (const [secret, session] of Object.entries(sessions)) {
+        for (const session of sessions) {
             if (session.pairingCode == pairingCode) {
                 // found valid session!
 
@@ -103,7 +107,7 @@ export function addAPIRoutes(app: Express) {
                     // session can be paired!
                     console.info("Session succesfully paired");
                     res.status(200).send({
-                        secret: secret
+                        secret: session.secret
                     });
                 } else {
                     // session cannot be paired again
