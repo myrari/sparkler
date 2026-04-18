@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { addLovenseRoutes } from "./lovense.js";
+import { addOpenShockRoutes } from "./openshock.js";
 export let sessions = [];
 export function addAPIRoutes(app) {
     // main api
@@ -13,48 +14,45 @@ export function addAPIRoutes(app) {
             });
             return;
         }
-        for (const session of sessions) {
-            if (session.secret == secret) {
-                // we have a valid session!
-                if (session.strictIP && session.IP != req.ip) {
-                    // correct secret, but incorrect connection IP
-                    console.warn(`${req.ip} sent a command with correct secret, but incorrect IP address! Secret may be compromised`);
-                    res.status(403).send({
-                        error: "Failed IP address check"
-                    });
-                    return;
-                }
-                console.info(`sparkle for session from ${session.IP}!`);
-                if (!req.body) {
-                    console.error(`${req.ip} sent command with no body!`);
-                    res.status(400).send({
-                        error: "No command body provided"
-                    });
-                    return;
-                }
-                if (!req.body.intensity || !req.body.duration) {
-                    console.error(`${req.ip} sent command without required parameters!`);
-                    res.status(400).send({
-                        error: "Malformed command"
-                    });
-                    return;
-                }
-                const intensity = req.body.intensity;
-                const duration = req.body.duration;
-                // send to all sinks for this session
-                for (const sink of session.sinks) {
-                    sink.send(intensity, duration);
-                }
-                res.sendStatus(200);
-                return;
-            }
+        const session = sessions.find(s => s.secret == secret);
+        if (!session) {
+            // could not find valid session
+            console.warn(`Source ${req.ip} send command with invalid secret`);
+            res.status(401).send({
+                error: "Invalid session secret! Did you pair first?"
+            });
+            return;
         }
-        // could not find valid session
-        console.warn(`${req.ip} send command with invalid secret`);
-        res.status(401).send({
-            error: "Invalid session secret! Did you pair first?"
-        });
-        return;
+        if (session.strictIP && session.IP != req.ip) {
+            // correct secret, but incorrect connection IP
+            console.warn(`Source ${req.ip} sent a command with correct secret, but incorrect IP address! Secret may be compromised`);
+            res.status(403).send({
+                error: "Failed IP address check"
+            });
+            return;
+        }
+        console.info(`sparkle for session from ${session.IP}!`);
+        if (!req.body) {
+            console.error(`Source ${req.ip} sent command with no body!`);
+            res.status(400).send({
+                error: "No command body provided"
+            });
+            return;
+        }
+        if (!req.body.intensity || !req.body.duration) {
+            console.error(`Source ${req.ip} sent command without required parameters!`);
+            res.status(400).send({
+                error: "Malformed command"
+            });
+            return;
+        }
+        const intensity = req.body.intensity;
+        const duration = req.body.duration;
+        // send to all sinks for this session
+        for (const sink of session.sinks) {
+            sink.send(intensity, duration);
+        }
+        res.sendStatus(200);
     });
     // auth flow:
     // 1. user visits website and generates a new Pairing Code & Session Secret
@@ -79,9 +77,9 @@ export function addAPIRoutes(app) {
             IP: req.ip,
             // don't use strict ip checking by default, for testing purposes
             strictIP: false,
-            timesPaired: 0,
+            sourcesPaired: 0,
             // for now, no multi-pairing
-            allowMultiPair: false,
+            allowMultiSource: false,
             // no sinks to start
             sinks: [],
         };
@@ -91,34 +89,33 @@ export function addAPIRoutes(app) {
         });
     });
     app.post("/auth", (req, res) => {
-        console.info(`Secret exchange request from ${req.ip}`);
+        console.info(`Source pairing request from ${req.ip}`);
         const pairingCode = req.get("pairing-code");
-        for (const session of sessions) {
-            if (session.pairingCode == pairingCode) {
-                // found valid session!
-                if (session.timesPaired < 1 || session.allowMultiPair) {
-                    // session can be paired!
-                    console.info("Session succesfully paired");
-                    res.status(200).send({
-                        secret: session.secret
-                    });
-                }
-                else {
-                    // session cannot be paired again
-                    console.warn("Cannot pair, session already paired");
-                    res.status(403).send({
-                        error: "Session already paired!"
-                    });
-                }
-                return;
-            }
+        const session = sessions.find(s => s.pairingCode == pairingCode);
+        if (!session) {
+            // could not find valid session
+            console.warn("Invalid pairing code");
+            res.status(401).send({
+                error: "Invalid pairing code!"
+            });
+            return;
         }
-        // could not find valid session
-        console.warn("Invalid pairing code");
-        res.status(401).send({
-            error: "Invalid pairing code!"
-        });
+        if (session.sourcesPaired < 1 || session.allowMultiSource) {
+            // source can be paired!
+            console.info("Source succesfully paired");
+            res.status(200).send({
+                secret: session.secret
+            });
+        }
+        else {
+            // session cannot be paired again
+            console.warn("Cannot pair, session already paired to source");
+            res.status(403).send({
+                error: "Session already paired to source!"
+            });
+        }
     });
     // add sink routes
     addLovenseRoutes(app);
+    addOpenShockRoutes(app);
 }

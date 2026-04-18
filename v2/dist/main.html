@@ -7,38 +7,22 @@
 	<title>Sparkler</title>
 
 	<script src="main.js"></script>
-
-	<style>
-	code {
-		background-color: #f1f1f1;
-		padding: 2px;
-		font-size: 105%;
-		border-radius: 5px;
-	}
-	</style>
+	<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-	<div class="main_center" display="flex" align="center" justify-content="center">
-		<h1>✨sparkler✨</h1>
+	<div class="main-center">
+		<div>
+			<h1>✨sparkler✨</h1>
 
-		<div id="error"></div>
-		<div id="interact">
-			<button type="button" id="new_session_button" onclick="newSession()">New Session</button>
-			<div id="pairing_code" style="padding: 10px"></div>
-			<div id="link_options" style="padding: 10px"></div>
+			<div id="error"></div>
+			<div id="interact">
+				<button type="button" id="new_session_button" onclick="newSession()">New Session</button>
+				<div id="pairing_code" class="section"></div>
+				<div id="link_options" class="section"></div>
+			</div>
 		</div>
-
-		<!-- <form action="/auth" method="post", id="auth_form"> -->
-		<!-- 	<label for="auth_username">Username:</label> -->
-		<!-- 	<input type="text" name="auth_username" id="auth_username"><br> -->
-		<!-- 	<label for="auth_secret">Secret:</label> -->
-		<!-- 	<input type="text" name="auth_secret" id="auth_secret"><br> -->
-		<!-- 	<input type="submit" value="Submit"> -->
-		<!-- </form> -->
-		<!-- <div id="error_response_div"></div> -->
-		<!-- <div id="qrcode_div"></div> -->
 	</div>
 </body>
 

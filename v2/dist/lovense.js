@@ -87,9 +87,17 @@ function newLovenseSink(socket) {
     };
 }
 export function addLovenseRoutes(app) {
+    // lovense auth route
     app.post("/lovense/auth", async (req, res) => {
         console.info(`Attempting Lovense auth from ${req.ip}`);
         const pairingCode = req.get("pairing-code");
+        if (!pairingCode) {
+            console.warn("No pairing code provided");
+            res.status(401).send({
+                error: "No pairing code provided!"
+            });
+            return;
+        }
         const session = sessions.find(s => s.pairingCode == pairingCode);
         if (!session) {
             // could not find valid session
