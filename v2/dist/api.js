@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
-// let sessions: Record<string, SessionData> = {};
-let sessions = [];
+import { addLovenseRoutes } from "./lovense.js";
+export let sessions = [];
 export function addAPIRoutes(app) {
     // main api
     app.post("/sparkle", (req, res) => {
@@ -25,6 +25,26 @@ export function addAPIRoutes(app) {
                     return;
                 }
                 console.info(`sparkle for session from ${session.IP}!`);
+                if (!req.body) {
+                    console.error(`${req.ip} sent command with no body!`);
+                    res.status(400).send({
+                        error: "No command body provided"
+                    });
+                    return;
+                }
+                if (!req.body.intensity || !req.body.duration) {
+                    console.error(`${req.ip} sent command without required parameters!`);
+                    res.status(400).send({
+                        error: "Malformed command"
+                    });
+                    return;
+                }
+                const intensity = req.body.intensity;
+                const duration = req.body.duration;
+                // send to all sinks for this session
+                for (const sink of session.sinks) {
+                    sink.send(intensity, duration);
+                }
                 res.sendStatus(200);
                 return;
             }
@@ -52,15 +72,18 @@ export function addAPIRoutes(app) {
             return;
         }
         const newSession = {
+            id: randomUUID().toString(),
             secret: randomUUID().toString(),
             pairingCode: randomUUID().toString(),
             timeCreated: new Date(),
             IP: req.ip,
-            // use strict ip checking by default
-            strictIP: true,
+            // don't use strict ip checking by default, for testing purposes
+            strictIP: false,
             timesPaired: 0,
             // for now, no multi-pairing
             allowMultiPair: false,
+            // no sinks to start
+            sinks: [],
         };
         sessions.push(newSession);
         res.send({
@@ -96,4 +119,6 @@ export function addAPIRoutes(app) {
             error: "Invalid pairing code!"
         });
     });
+    // add sink routes
+    addLovenseRoutes(app);
 }

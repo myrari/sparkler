@@ -1,7 +1,13 @@
 import { randomUUID } from "crypto";
 import { Express } from "express";
+import { addLovenseRoutes } from "./lovense.js";
 
-interface SessionData {
+export interface Sink {
+    send: (intensity: number, duration: number) => void;
+}
+
+export interface SessionData {
+    id: string;
     secret: string;
     pairingCode: string;
 
@@ -12,10 +18,11 @@ interface SessionData {
 
     timesPaired: number;
     allowMultiPair: boolean;
+
+    sinks: Array<Sink>;
 }
 
-// let sessions: Record<string, SessionData> = {};
-let sessions: Array<SessionData> = [];
+export let sessions: Array<SessionData> = [];
 
 export function addAPIRoutes(app: Express) {
     // main api
@@ -43,6 +50,29 @@ export function addAPIRoutes(app: Express) {
                 }
 
                 console.info(`sparkle for session from ${session.IP}!`);
+
+				if (!req.body) {
+					console.error(`${req.ip} sent command with no body!`);
+
+					res.status(400).send({
+						error: "No command body provided"
+					});
+					return;
+				}
+				if (!req.body.intensity || !req.body.duration) {
+					console.error(`${req.ip} sent command without required parameters!`);
+					res.status(400).send({
+						error: "Malformed command"
+					});
+					return;
+				}
+                const intensity: number = req.body.intensity;
+                const duration: number = req.body.duration;
+
+				// send to all sinks for this session
+                for (const sink of session.sinks) {
+                    sink.send(intensity, duration);
+                }
 
                 res.sendStatus(200);
                 return;
@@ -77,15 +107,18 @@ export function addAPIRoutes(app: Express) {
         }
 
         const newSession: SessionData = {
+            id: randomUUID().toString(),
             secret: randomUUID().toString(),
             pairingCode: randomUUID().toString(),
             timeCreated: new Date(),
             IP: req.ip,
-            // use strict ip checking by default
-            strictIP: true,
+            // don't use strict ip checking by default, for testing purposes
+            strictIP: false,
             timesPaired: 0,
             // for now, no multi-pairing
             allowMultiPair: false,
+            // no sinks to start
+            sinks: [],
         }
         sessions.push(newSession);
 
@@ -127,4 +160,7 @@ export function addAPIRoutes(app: Express) {
             error: "Invalid pairing code!"
         });
     });
+
+    // add sink routes
+    addLovenseRoutes(app);
 }

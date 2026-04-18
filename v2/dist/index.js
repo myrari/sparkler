@@ -6,7 +6,6 @@ const root = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT;
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded());
 /** MAIN ROUTES */
 app.get("/", (_req, res) => {
     res.sendFile("main.html", {
