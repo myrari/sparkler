@@ -1,61 +1,79 @@
 # ✨Sparkler✨
 
-This is a project for connecting a Minecraft client to a remote-controlled
-Lovense device via a central control server (hosted at
-[sparkler.myrari.net](https://sparkler.myrari.net/)).
+Sparkler is a middleware web-app designed to connect various games ("sources")
+to real-world stimuli ("sinks"), like making a call to OpenShock whenever you
+take damage in Minecraft.
 
-It is structued into 2 primary sub-projects:
+This repo **only** has code on the central control server, for information on
+individual sources/games check the [Sources](#sources) section. For more
+information on the Sparkler control API (possibly for building your own custom
+source), check the [API](#api) section.
 
-- [The client-side Minecraft Mod](/fabric_mod)
-
-- [The control server](/server)
-
-## The Minecraft Mod
-
-The mod is a fully client-side Fabric mod (currently set up to be build for
-version 1.21.10) that uses a small mixin to detect when the client player loses
-health by reading the hotbar GUI. It then uses the built-in Java HTTP Client to
-send an HTTP post request to the control server, containing information on
-which player was hit, for how much damage, and how much health they have
-remaining.
-
-The mod also adds a `/sparkle` command that gives that session's client secret
-(more about this in the [API](#api) section).
+Currently, the supported sinks are Lovense and OpenShock.
 
 ## The Control Server
 
 The control server is a simple [express.js](https://expressjs.com/) webserver
 that handles serving the very basic frontend HTML and authenticating with the
-Lovense API. It expects the following environment variables:
+various sink APIs. It expects the following environment variables for **all
+usage**:
 
 - `PORT`: The port to open the HTTP server on
 
-- `DEV_TOKEN`: The [Lovense API dev token](https://developer.lovense.com/)
+For use with the **Lovense API**, the following environment variables must be
+present:
 
-- `PLATFORM`: The domain of your Lovense developer account
+- `LOVENSE_TOKEN`: The [Lovense API dev token](https://developer.lovense.com/)
+
+- `LOVENSE_PLATFORM`: The domain of your Lovense developer account
+
+For use with the **OpenShock API**, the following environment variables must be
+present:
+
+- `OPENSHOCK_TOKEN`: Your OpenShock API token
+
 
 Once the server is running, it will serve the main HTML page where you can
-enter your Minecraft username and client secret (see [API](#api)), and it will
-then authenticate your Minecraft account with [Mojang's
-API](https://minecraft.wiki/w/Mojang_API) and present a QR code to be scanned
-in the Lovense Remote app. Once you have authenticated your Minecraft account,
-all control commands will be sent to all devices you have connected in the
-Remote app.
+create a new control session, which will give you the **pairing code** for that
+session (this is how you will pair any command sources). It will also have
+dropdown menus for connecting to the supported sinks (i.e. Lovense, OpenShock,
+etc) so that you can pair those.
+
+## Sources
+
+Currently, the only officially supported source is the [Minecraft
+mod](https://github.com/myrari/sparkler-minecraft), but more are planned in
+development for more games!
+
+If you want to make your own, the API documentation can be found in the
+[API](#api) section!
 
 ## API
 
-Communication between the client mod and the control server is done via a very
-minimal HTTP API, where the body of each request is expected to be `JSON` and
-it recognizes the following routes:
+Communication between any source and the control server is done via a small
+HTTP API, where the main route for sending commands is a `POST` route to
+`/sparkle`. You **must** provide the session secret as the HTTP header
+`secret`, and the body of the `POST` request should be `JSON` of the following
+schema:
 
-| Route | Parameters |
-| ----- | ---------- |
-| `/hit` (`POST`) | `dmg`: integer representing the amount of damage taken |
-| | `to`: integer representing the player's remaining health |
+```json
+{
+    intensity: number,
+    duration: number
+}
+```
 
-In addition, for authentication purposes, every request must include the query
-parameters `id` (the Minecraft UUID) and `secret` (the client secret). These
-must both match **exactly** with what is entered in the Web UI (see [The
-Control Server](#the-control-server)), and you can get your client secret by
-running the in-game `/sparkle` command on the Minecraft client.
+To get the session secret, you must follow the **authentication pipeline**:
+
+1. The user creates a new **session** on the web app and receives the session's
+   **pairing code**.
+
+2. The source sends a `POST` request to `/auth` with the pairing code in the
+   HTTP header `pairing-code`.
+
+3. The server responds with a `JSON` object containing the parameter `secret`,
+   which is a string representing the **session secret**.
+
+Once the source has the session secret, it can be used in the `secret` header
+for all requests to `/sparkle`.
 
