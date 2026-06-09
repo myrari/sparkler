@@ -1,0 +1,36 @@
+code {
+	background-color: #f1f1f1;
+	padding: 2px;
+	font-size: 105%;
+	border-radius: 5px;
+}
+
+.main-center {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+}
+
+.section {
+	margin: 8px;
+	padding: 8px;
+	border: 2px solid gray;
+	border-radius: 8px;
+}
+
+.collapsible-button {
+	cursor: pointer;
+	padding: 18px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	background: lightgray;
+}
+
+.collapsible-content {
+	display: none;
+	overflow: hidden;
+	padding-top: 18px;
+	background: gray;
+}
