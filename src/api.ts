@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomInt, randomUUID } from "crypto";
 import { Express } from "express";
 
 import { addLovenseRoutes } from "./lovense.js";
@@ -25,6 +25,19 @@ export interface SessionData {
 }
 
 export let sessions: Array<SessionData> = [];
+
+function newPairingCode(): string {
+    let out = "";
+
+    // generate a sequence of digits
+    const DIGITS = 6;
+
+    for (let i = 0; i < DIGITS; i++) {
+        out += randomInt(10).toString();
+    }
+
+    return out;
+}
 
 export function addAPIRoutes(app: Express) {
     // main api
@@ -107,11 +120,10 @@ export function addAPIRoutes(app: Express) {
         const newSession: SessionData = {
             id: randomUUID().toString(),
             secret: randomUUID().toString(),
-            pairingCode: randomUUID().toString(),
+            pairingCode: newPairingCode(),
             timeCreated: new Date(),
             IP: req.ip,
-            // don't use strict ip checking by default, for testing purposes
-            strictIP: false,
+            strictIP: true,
             sourcesPaired: 0,
             // for now, no multi-pairing
             allowMultiSource: false,
