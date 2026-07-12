@@ -103,6 +103,7 @@ async function addOpenShockLink(parent, pairingCode) {
             console.log("paired OpenShock!");
             // clear text input
             tokenInput.value = "";
+            shockersInput.value = "";
         } else {
             const json = await resp.json();
             const error = json.error;
